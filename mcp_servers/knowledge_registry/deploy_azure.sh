@@ -4,7 +4,7 @@
 set -e
 
 # Configuration
-RESOURCE_GROUP="fredesa-resources"
+RESOURCE_GROUP="rg-fredesa-dev"
 LOCATION="eastus"
 ACR_NAME="fredesaacr"
 APP_NAME="fredesa-mcp-server"
