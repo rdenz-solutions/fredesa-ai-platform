@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""
+Create Priority 3 tables (Supporting Infrastructure)
+Week 3 of schema v2.1 implementation
+"""
+
+import psycopg2
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+
+def main():
+    print("\n" + "="*70)
+    print("Creating Priority 3 Tables (Supporting Infrastructure)")
+    print("="*70 + "\n")
+    
+    # Get database password
+    credential = DefaultAzureCredential()
+    vault_url = "https://fredesa-kv-e997e3.vault.azure.net/"
+    secret_client = SecretClient(vault_url=vault_url, credential=credential)
+    password = secret_client.get_secret('postgres-password').value
+    
+    # Connect
+    conn = psycopg2.connect(
+        host='fredesa-db-dev.postgres.database.azure.com',
+        port=5432,
+        database='postgres',
+        user='fredesaadmin',
+        password=password,
+        sslmode='require'
+    )
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Table 1: connector_query_log
+        print("1. Creating connector_query_log table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS connector_query_log (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                connector_id UUID NOT NULL REFERENCES customer_connectors(id) ON DELETE CASCADE,
+                query_text TEXT,
+                query_type VARCHAR(50),
+                results_count INTEGER,
+                execution_time_ms INTEGER,
+                status VARCHAR(20) CHECK (status IN ('success', 'error', 'timeout')),
+                error_message TEXT,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_connector_query_log_connector ON connector_query_log(connector_id);
+            CREATE INDEX IF NOT EXISTS idx_connector_query_log_status ON connector_query_log(status);
+            CREATE INDEX IF NOT EXISTS idx_connector_query_log_created ON connector_query_log(created_at);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 2: source_promotions
+        print("2. Creating source_promotions table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS source_promotions (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                from_environment VARCHAR(20) CHECK (from_environment IN ('development', 'staging', 'production')),
+                to_environment VARCHAR(20) CHECK (to_environment IN ('development', 'staging', 'production')),
+                promoted_by VARCHAR(255),
+                promotion_status VARCHAR(20) DEFAULT 'pending' CHECK (promotion_status IN (
+                    'pending', 'approved', 'rejected', 'completed'
+                )),
+                approval_notes TEXT,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMPTZ
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_source_promotions_source ON source_promotions(source_id);
+            CREATE INDEX IF NOT EXISTS idx_source_promotions_status ON source_promotions(promotion_status);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 3: source_validations
+        print("3. Creating source_validations table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS source_validations (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                validation_type VARCHAR(50) NOT NULL,
+                validation_status VARCHAR(20) CHECK (validation_status IN ('pass', 'fail', 'warning')),
+                validation_score DECIMAL(5,2),
+                validation_details JSONB,
+                validated_by VARCHAR(255),
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_source_validations_source ON source_validations(source_id);
+            CREATE INDEX IF NOT EXISTS idx_source_validations_status ON source_validations(validation_status);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 4: source_feedback
+        print("4. Creating source_feedback table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS source_feedback (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
+                feedback_type VARCHAR(50) CHECK (feedback_type IN (
+                    'bug', 'feature_request', 'improvement', 'question', 'compliment'
+                )),
+                feedback_text TEXT NOT NULL,
+                priority VARCHAR(20) CHECK (priority IN ('low', 'medium', 'high', 'critical')),
+                status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved', 'closed')),
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMPTZ
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_source_feedback_source ON source_feedback(source_id);
+            CREATE INDEX IF NOT EXISTS idx_source_feedback_customer ON source_feedback(customer_id);
+            CREATE INDEX IF NOT EXISTS idx_source_feedback_status ON source_feedback(status);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 5: learning_paths
+        print("5. Creating learning_paths table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS learning_paths (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                category_id UUID REFERENCES categories(id),
+                difficulty_level VARCHAR(20) CHECK (difficulty_level IN (
+                    'beginner', 'intermediate', 'advanced', 'expert'
+                )),
+                estimated_hours INTEGER,
+                source_sequence UUID[] DEFAULT '{}',
+                prerequisites UUID[] DEFAULT '{}',
+                is_published BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_learning_paths_category ON learning_paths(category_id);
+            CREATE INDEX IF NOT EXISTS idx_learning_paths_difficulty ON learning_paths(difficulty_level);
+            CREATE INDEX IF NOT EXISTS idx_learning_paths_published ON learning_paths(is_published);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 6: source_versions
+        print("6. Creating source_versions table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS source_versions (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                version_number INTEGER NOT NULL,
+                change_summary TEXT,
+                changed_by VARCHAR(255),
+                source_snapshot JSONB,
+                created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (source_id, version_number)
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_source_versions_source ON source_versions(source_id);
+            CREATE INDEX IF NOT EXISTS idx_source_versions_created ON source_versions(created_at);
+        """)
+        print("   ✓ Complete\n")
+        
+        # Table 7: quality_history
+        print("7. Creating quality_history table...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS quality_history (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                source_id UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+                quality_score DECIMAL(5,2) NOT NULL,
+                authority_score INTEGER,
+                validation_count INTEGER,
+                feedback_count INTEGER,
+                usage_count INTEGER,
+                measured_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_quality_history_source ON quality_history(source_id);
+            CREATE INDEX IF NOT EXISTS idx_quality_history_measured ON quality_history(measured_at);
+            CREATE INDEX IF NOT EXISTS idx_quality_history_score ON quality_history(quality_score);
+        """)
+        print("   ✓ Complete\n")
+        
+        conn.commit()
+        
+        # Verify tables
+        cursor.execute("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            AND table_type = 'BASE TABLE'
+            ORDER BY table_name
+        """)
+        tables = [r[0] for r in cursor.fetchall()]
+        
+        print("="*70)
+        print("SUCCESS: Priority 3 tables created")
+        print("="*70)
+        print(f"\nAll tables ({len(tables)}):")
+        for t in tables:
+            print(f"  • {t}")
+        print("\nRun tests to validate:")
+        print("  python3 scripts/database/test_schema_v2.py")
+        
+    except Exception as e:
+        print(f"\n❌ ERROR: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+if __name__ == '__main__':
+    main()
