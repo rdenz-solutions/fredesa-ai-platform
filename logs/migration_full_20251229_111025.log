@@ -1,0 +1,186 @@
+======================================================================
+📦 FreDeSa Knowledge Migration
+======================================================================
+Source: /Users/delchaplin/Project Files/rdenz-knowledge-registry/config/sources.yaml
+Target: fredesa-db-dev.postgres.database.azure.com
+
+📖 Loading sources from sources.yaml...
+   Found 1067 sources to migrate
+🔐 Retrieving database credentials from Azure Key Vault...
+📡 Connecting to PostgreSQL...
+
+📊 Creating categories...
+   ⏭️  AI (already exists)
+   ⏭️  AI/LLM (already exists)
+   ⏭️  AI/LLM_Platforms (already exists)
+   ⏭️  AI/RAG_Infrastructure (already exists)
+   ⏭️  AI_Governance (already exists)
+   ⏭️  AI_LLM (already exists)
+   ⏭️  AI_Orchestration (already exists)
+   ⏭️  Cloud_Platforms (already exists)
+   ⏭️  Cost_Analysis (already exists)
+   ⏭️  Culture (already exists)
+   ⏭️  Cybersecurity (already exists)
+   ⏭️  Data_Engineering (already exists)
+   ⏭️  Data_Management (already exists)
+   ⏭️  Design (already exists)
+   ⏭️  Design_Systems (already exists)
+   ⏭️  Developer_Tools (already exists)
+   ⏭️  Federal Contracting (already exists)
+   ⏭️  Federal_Contracting (already exists)
+   ⏭️  GEOINT (already exists)
+   ⏭️  Go_To_Market (already exists)
+   ⏭️  Green_Energy (already exists)
+   ⏭️  Infrastructure (already exists)
+   ⏭️  Intelligence (already exists)
+   ⏭️  Intelligence_Community (already exists)
+   ⏭️  Internal_Standards (already exists)
+   ⏭️  LLM_Frameworks (already exists)
+   ⏭️  Leadership (already exists)
+   ⏭️  Manufacturing (already exists)
+   ⏭️  Methodologies (already exists)
+   ⏭️  Microsoft_365 (already exists)
+   ⏭️  Platform (already exists)
+   ⏭️  Product_Management (already exists)
+   ⏭️  Productivity (already exists)
+   ⏭️  Programming_Languages (already exists)
+   ⏭️  Project_Management (already exists)
+   ⏭️  Prompt_Engineering (already exists)
+   ⏭️  Proposal_Development (already exists)
+   ⏭️  Revenue_Operations (already exists)
+   ⏭️  Sales_Enablement (already exists)
+   ⏭️  Standards (already exists)
+   ⏭️  Typography (already exists)
+   ⏭️  User_Experience (already exists)
+
+🚀 Migrating sources...
+   Progress: 10/1067
+   Progress: 20/1067
+   Progress: 30/1067
+   Progress: 40/1067
+   Progress: 50/1067
+   Progress: 60/1067
+   Progress: 70/1067
+   Progress: 80/1067
+   Progress: 90/1067
+   Progress: 100/1067
+   Progress: 110/1067
+   Progress: 120/1067
+   Progress: 130/1067
+   Progress: 140/1067
+   Progress: 150/1067
+   Progress: 160/1067
+   Progress: 170/1067
+   Progress: 180/1067
+   Progress: 190/1067
+   Progress: 200/1067
+   Progress: 210/1067
+   Progress: 220/1067
+   Progress: 230/1067
+   Progress: 240/1067
+   Progress: 250/1067
+   Progress: 260/1067
+   Progress: 270/1067
+   Progress: 280/1067
+   Progress: 290/1067
+   Progress: 300/1067
+   Progress: 310/1067
+   Progress: 320/1067
+   Progress: 330/1067
+   Progress: 340/1067
+   Progress: 350/1067
+   Progress: 360/1067
+   Progress: 370/1067
+   Progress: 380/1067
+   Progress: 390/1067
+   Progress: 400/1067
+   Progress: 410/1067
+   Progress: 420/1067
+   Progress: 430/1067
+   Progress: 440/1067
+   Progress: 450/1067
+   Progress: 460/1067
+   Progress: 470/1067
+   Progress: 480/1067
+   Progress: 490/1067
+   Progress: 500/1067
+   Progress: 510/1067
+   Progress: 520/1067
+   Progress: 530/1067
+   Progress: 540/1067
+   Progress: 550/1067
+   Progress: 560/1067
+   Progress: 570/1067
+   Progress: 580/1067
+   Progress: 590/1067
+   Progress: 600/1067
+   Progress: 610/1067
+   Progress: 620/1067
+   Progress: 630/1067
+   Progress: 640/1067
+   Progress: 650/1067
+   Progress: 660/1067
+   Progress: 670/1067
+   Progress: 680/1067
+   Progress: 690/1067
+   Progress: 700/1067
+   Progress: 710/1067
+   Progress: 720/1067
+   Progress: 730/1067
+   Progress: 740/1067
+   Progress: 750/1067
+   Progress: 760/1067
+   Progress: 770/1067
+   Progress: 780/1067
+   Progress: 790/1067
+   Progress: 800/1067
+   Progress: 810/1067
+   Progress: 820/1067
+   Progress: 830/1067
+   Progress: 840/1067
+   Progress: 850/1067
+   Progress: 860/1067
+   Progress: 870/1067
+   Progress: 880/1067
+   Progress: 890/1067
+   Progress: 900/1067
+   Progress: 910/1067
+   Progress: 920/1067
+   Progress: 930/1067
+   Progress: 940/1067
+   Progress: 950/1067
+   Progress: 960/1067
+   Progress: 970/1067
+   Progress: 980/1067
+   Progress: 990/1067
+   Progress: 1000/1067
+   Progress: 1010/1067
+   Progress: 1020/1067
+   Progress: 1030/1067
+   Progress: 1040/1067
+   Progress: 1050/1067
+   Progress: 1060/1067
+
+======================================================================
+📊 MIGRATION SUMMARY
+======================================================================
+✅ Successfully migrated: 942
+⏭️  Skipped (already exist): 125
+❌ Errors: 0
+📈 Total processed: 1067
+
+📦 Database State:
+   Categories: 44
+   Sources: 1043
+
+📐 Epistemological Dimensions:
+   practice: 395
+   current: 384
+   theory: 264
+
+🏆 Authority Types:
+   expert: 592 (score=70)
+   community: 271 (score=50)
+   official: 180 (score=90)
+
+✅ Database connection closed
