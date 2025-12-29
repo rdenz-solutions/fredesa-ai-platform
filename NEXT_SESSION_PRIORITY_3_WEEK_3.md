@@ -14,9 +14,9 @@ Add 6 supporting tables to complete schema structure and improve test coverage t
 - ✅ sources  
 - ✅ customers
 - ✅ usage_tracking
-- ✅ concepts
-- ✅ relationships
-- ✅ use_cases
+- ✅ source_concepts (renamed from concepts)
+- ✅ source_relationships (renamed from relationships)
+- ✅ source_use_cases (renamed from use_cases)
 - ✅ customer_connectors
 - ✅ citations
 

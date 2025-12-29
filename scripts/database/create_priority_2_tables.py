@@ -32,10 +32,10 @@ def main():
     try:
         cursor = conn.cursor()
         
-        # Table 1: concepts
-        print("1. Creating concepts table...")
+        # Table 1: source_concepts
+        print("1. Creating source_concepts table...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS concepts (
+            CREATE TABLE IF NOT EXISTS source_concepts (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(255) NOT NULL UNIQUE,
                 definition TEXT,
@@ -45,18 +45,18 @@ def main():
                 updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
             );
             
-            CREATE INDEX IF NOT EXISTS idx_concepts_name ON concepts(name);
-            CREATE INDEX IF NOT EXISTS idx_concepts_category ON concepts(category_id);
+            CREATE INDEX IF NOT EXISTS idx_source_concepts_name ON source_concepts(name);
+            CREATE INDEX IF NOT EXISTS idx_source_concepts_category ON source_concepts(category_id);
         """)
         print("   ✓ Complete\n")
         
-        # Table 2: relationships
-        print("2. Creating relationships table...")
+        # Table 2: source_relationships
+        print("2. Creating source_relationships table...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS relationships (
+            CREATE TABLE IF NOT EXISTS source_relationships (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                from_concept_id UUID NOT NULL REFERENCES concepts(id) ON DELETE CASCADE,
-                to_concept_id UUID NOT NULL REFERENCES concepts(id) ON DELETE CASCADE,
+                from_concept_id UUID NOT NULL REFERENCES source_concepts(id) ON DELETE CASCADE,
+                to_concept_id UUID NOT NULL REFERENCES source_concepts(id) ON DELETE CASCADE,
                 relationship_type VARCHAR(50) NOT NULL CHECK (relationship_type IN (
                     'prerequisite', 'related', 'contradicts', 'extends', 'implements'
                 )),
@@ -65,16 +65,16 @@ def main():
                 UNIQUE (from_concept_id, to_concept_id, relationship_type)
             );
             
-            CREATE INDEX IF NOT EXISTS idx_relationships_from ON relationships(from_concept_id);
-            CREATE INDEX IF NOT EXISTS idx_relationships_to ON relationships(to_concept_id);
-            CREATE INDEX IF NOT EXISTS idx_relationships_type ON relationships(relationship_type);
+            CREATE INDEX IF NOT EXISTS idx_source_relationships_from ON source_relationships(from_concept_id);
+            CREATE INDEX IF NOT EXISTS idx_source_relationships_to ON source_relationships(to_concept_id);
+            CREATE INDEX IF NOT EXISTS idx_source_relationships_type ON source_relationships(relationship_type);
         """)
         print("   ✓ Complete\n")
         
-        # Table 3: use_cases
-        print("3. Creating use_cases table...")
+        # Table 3: source_use_cases
+        print("3. Creating source_use_cases table...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS use_cases (
+            CREATE TABLE IF NOT EXISTS source_use_cases (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
@@ -88,8 +88,8 @@ def main():
                 updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
             );
             
-            CREATE INDEX IF NOT EXISTS idx_use_cases_category ON use_cases(category_id);
-            CREATE INDEX IF NOT EXISTS idx_use_cases_difficulty ON use_cases(difficulty_level);
+            CREATE INDEX IF NOT EXISTS idx_source_use_cases_category ON source_use_cases(category_id);
+            CREATE INDEX IF NOT EXISTS idx_source_use_cases_difficulty ON source_use_cases(difficulty_level);
         """)
         print("   ✓ Complete\n")
         
