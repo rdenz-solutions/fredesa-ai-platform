@@ -1,0 +1,42 @@
+{
+  "name": "fredesa-knowledge-registry",
+  "version": "1.0.0",
+  "description": "FreDeSa Knowledge Registry MCP Server - 1,043 authoritative sources with epistemological framework",
+  "author": "FreDeSa Solutions",
+  "license": "Proprietary",
+  "main": "server.py",
+  "runtime": "python3.11",
+  "dependencies": {
+    "psycopg2-binary": "^2.9.9",
+    "mcp": "^0.1.0",
+    "azure-identity": "^1.15.0",
+    "azure-keyvault-secrets": "^4.7.0"
+  },
+  "environment": {
+    "POSTGRES_HOST": "fredesa-db-dev.postgres.database.azure.com",
+    "POSTGRES_DB": "postgres",
+    "POSTGRES_USER": "fredesaadmin",
+    "POSTGRES_SSLMODE": "require",
+    "AZURE_KEYVAULT_URL": "https://fredesa-kv-e997e3.vault.azure.net/"
+  },
+  "secrets": [
+    "POSTGRES_PASSWORD"
+  ],
+  "tools": [
+    {
+      "name": "query_knowledge_base",
+      "description": "Search 1,043 authoritative sources with epistemological filtering",
+      "rate_limit": "100/day"
+    },
+    {
+      "name": "get_source_details",
+      "description": "Get full metadata for a specific source",
+      "rate_limit": "1000/day"
+    },
+    {
+      "name": "list_categories",
+      "description": "List available knowledge categories",
+      "rate_limit": "100/day"
+    }
+  ]
+}
