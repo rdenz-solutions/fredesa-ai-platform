@@ -18,7 +18,7 @@ export async function getAccessToken(msalInstance: PublicClientApplication): Pro
     }
 
     const request = {
-        scopes: ["User.Read"],
+        scopes: ["api://257a158a-c6d6-4595-8dc3-df07e83504ac/access_as_user"],
         account: accounts[0]
     };
 
