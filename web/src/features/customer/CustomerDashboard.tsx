@@ -12,13 +12,13 @@ export const CustomerDashboard: React.FC = () => {
   // Fetch user profile
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile'],
-    queryFn: () => getUserProfile(instance),
+    queryFn: () => getUserProfile(instance as any),
   });
 
   // Fetch proposals
   const { data: proposalsData, isLoading: proposalsLoading, error } = useQuery({
     queryKey: ['proposals'],
-    queryFn: () => getProposals(instance),
+    queryFn: () => getProposals(instance as any),
   });
 
   const isLoading = profileLoading || proposalsLoading;
@@ -207,7 +207,7 @@ const ProposalDetailModal: React.FC<{ proposalId: string; onClose: () => void }>
   
   const { data: proposal, isLoading } = useQuery({
     queryKey: ['proposal', proposalId],
-    queryFn: () => getProposal(proposalId, instance),
+    queryFn: () => getProposal(proposalId, instance as any),
   });
 
   if (isLoading) {

@@ -10,13 +10,13 @@ export const AdminDashboard: React.FC = () => {
   // Fetch analytics
   const { data: analytics, isLoading: analyticsLoading } = useQuery({
     queryKey: ['analytics'],
-    queryFn: () => getAnalytics(instance),
+    queryFn: () => getAnalytics(instance as any),
   });
 
   // Fetch users
   const { data: users, isLoading: usersLoading, error } = useQuery({
     queryKey: ['users'],
-    queryFn: () => getUsers(instance),
+    queryFn: () => getUsers(instance as any),
   });
 
   const isLoading = analyticsLoading || usersLoading;
