@@ -5,18 +5,18 @@ export const msalConfig: Configuration = {
     auth: {
         clientId: "257a158a-c6d6-4595-8dc3-df07e83504ac",
         authority: "https://login.microsoftonline.com/19815b28-437b-405b-ade0-daea9943eb8b",
-        redirectUri: "http://localhost:3000",
-        postLogoutRedirectUri: "http://localhost:3000",
+        redirectUri: "https://fredesa-ai-platform.vercel.app",
+        postLogoutRedirectUri: "https://fredesa-ai-platform.vercel.app",
     },
     cache: {
-        cacheLocation: "sessionStorage",
+        cacheLocation: "localStorage", // Changed from sessionStorage for popup mode
         storeAuthStateInCookie: false,
     },
 };
 
 // Add here scopes for id token to be used at MS Identity Platform endpoints.
 export const loginRequest: PopupRequest = {
-    scopes: ["User.Read"]
+    scopes: ["api://257a158a-c6d6-4595-8dc3-df07e83504ac/access_as_user"]
 };
 
 // Add here the endpoints for MS Graph API services you would like to use.

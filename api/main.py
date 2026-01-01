@@ -23,7 +23,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Development
         "http://127.0.0.1:3000",  # Development alternative
-        # Add production URLs when deployed
+        "https://fredesa-ai-platform.vercel.app",  # Production
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,14 +33,21 @@ app.add_middleware(
 # Azure AD Configuration
 AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID", "19815b28-437b-405b-ade0-daea9943eb8b")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "257a158a-c6d6-4595-8dc3-df07e83504ac")
+AZURE_AUDIENCE = os.getenv(
+    "AZURE_AUDIENCE",
+    "api://257a158a-c6d6-4595-8dc3-df07e83504ac",
+)
+AZURE_ISSUER = f"https://sts.windows.net/{AZURE_TENANT_ID}/"
+AZURE_JWKS_URL = (
+    f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/discovery/v2.0/keys"
+)
 
 security = HTTPBearer()
 
 # Azure AD Token Validation
 def get_jwks_client():
     """Get JWKS client for token validation"""
-    jwks_url = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/discovery/v2.0/keys"
-    return PyJWKClient(jwks_url)
+    return PyJWKClient(AZURE_JWKS_URL)
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """
@@ -49,17 +56,16 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     token = credentials.credentials
     
     try:
-        # Get signing key from Azure AD
         jwks_client = get_jwks_client()
-        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        signing_key = jwks_client.get_signing_key_from_jwt(token).key
         
-        # Decode and verify token
         payload = jwt.decode(
             token,
-            signing_key.key,
+            signing_key,
             algorithms=["RS256"],
-            audience=AZURE_CLIENT_ID,
-            options={"verify_exp": True}
+            audience=AZURE_AUDIENCE,
+            issuer=AZURE_ISSUER,
+            options={"verify_signature": True, "verify_exp": True, "verify_aud": True, "verify_iss": True}
         )
         
         return payload
@@ -71,6 +77,7 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
             headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError as e:
+        print("[token-error]", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {str(e)}",

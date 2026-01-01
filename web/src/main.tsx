@@ -11,7 +11,11 @@ const root = createRoot(rootElement);
 const RootComponent = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [msalInstance] = useState(() => new PublicClientApplication(msalConfig));
+  const [msalInstance] = useState(() => {
+    const instance = new PublicClientApplication(msalConfig);
+    (window as any).__msalPublicClientApplication = instance;
+    return instance;
+  });
 
   useEffect(() => {
     const init = async () => {
