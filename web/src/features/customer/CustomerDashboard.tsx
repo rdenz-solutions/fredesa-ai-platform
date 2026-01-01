@@ -14,7 +14,7 @@ export const CustomerDashboard: React.FC = () => {
   });
 
   // Fetch proposals
-  const { data: proposals, isLoading: proposalsLoading, error } = useQuery({
+  const { data: proposalsData, isLoading: proposalsLoading, error } = useQuery({
     queryKey: ['proposals'],
     queryFn: () => getProposals(instance),
   });
@@ -43,8 +43,9 @@ export const CustomerDashboard: React.FC = () => {
     );
   }
 
-  const activeProposals = proposals?.filter(p => p.status === 'active') || [];
-  const totalProposals = proposals?.length || 0;
+  const proposals = proposalsData?.proposals || [];
+  const activeProposals = proposals.filter(p => p.status === 'active');
+  const totalProposals = proposals.length;
 
   return (
     <div className="p-8 bg-white min-h-screen">
@@ -52,7 +53,7 @@ export const CustomerDashboard: React.FC = () => {
         <header className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">
-              👋 Welcome back, {profile?.displayName || 'User'}
+              👋 Welcome back, {profile?.name || 'User'}
             </h1>
             <p className="text-slate-600">Manage your Federal Proposals and AI Agents</p>
           </div>
