@@ -56,6 +56,13 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     token = credentials.credentials
     
     try:
+        # Decode without verification first to see what's in the token
+        unverified = jwt.decode(token, options={"verify_signature": False})
+        print(f"[token-debug] Token issuer: {unverified.get('iss')}")
+        print(f"[token-debug] Token audience: {unverified.get('aud')}")
+        print(f"[token-debug] Expected issuer: {AZURE_ISSUER}")
+        print(f"[token-debug] Expected audience: {AZURE_AUDIENCE}")
+        
         jwks_client = get_jwks_client()
         signing_key = jwks_client.get_signing_key_from_jwt(token).key
         
