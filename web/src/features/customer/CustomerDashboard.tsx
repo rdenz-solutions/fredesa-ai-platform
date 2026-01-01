@@ -48,78 +48,86 @@ export const CustomerDashboard: React.FC = () => {
   const totalProposals = proposals.length;
 
   return (
-    <div className="p-8 bg-white min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8 flex justify-between items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-7xl mx-auto p-8">
+        <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-4xl font-bold text-slate-900 mb-2">
               👋 Welcome back, {profile?.name || 'User'}
             </h1>
-            <p className="text-slate-600">Manage your Federal Proposals and AI Agents</p>
+            <p className="text-slate-600 text-lg">Manage your Federal Proposals and AI Agents</p>
           </div>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-all shadow-md hover:shadow-lg">
             + New Proposal
           </button>
         </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-600 uppercase">Total Proposals</h3>
-            <p className="text-3xl font-bold text-blue-900 mt-2">{totalProposals}</p>
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3">Total Proposals</h3>
+            <p className="text-4xl font-bold text-slate-900">{totalProposals}</p>
           </div>
           
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl border border-emerald-200">
-            <h3 className="text-sm font-medium text-emerald-600 uppercase">Active</h3>
-            <p className="text-3xl font-bold text-emerald-900 mt-2">{activeProposals.length}</p>
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-sm font-semibold text-emerald-600 uppercase tracking-wide mb-3">Active</h3>
+            <p className="text-4xl font-bold text-slate-900">{activeProposals.length}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
-            <h3 className="text-sm font-medium text-purple-600 uppercase">Win Rate</h3>
-            <p className="text-3xl font-bold text-purple-900 mt-2">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <h3 className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-3">Win Rate</h3>
+            <p className="text-4xl font-bold text-slate-900">
               {totalProposals > 0 ? Math.round((activeProposals.length / totalProposals) * 100) : 0}%
             </p>
           </div>
         </div>
 
         {/* Proposals List */}
-        <div className="border border-slate-200 rounded-xl overflow-hidden">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-            <h2 className="text-xl font-semibold">📋 Your Proposals</h2>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-slate-100 to-slate-50 px-6 py-4 border-b border-slate-200">
+            <h2 className="text-2xl font-bold text-slate-900">📋 Your Proposals</h2>
           </div>
           
           {proposals && proposals.length > 0 ? (
             <div className="divide-y divide-slate-100">
               {proposals.map((proposal) => (
-                <div key={proposal.id} className="p-6 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-slate-900 mb-1">
+                <div key={proposal.id} className="px-6 py-5 hover:bg-slate-50 transition-colors cursor-pointer group">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
                         {proposal.title}
                       </h3>
-                      <p className="text-sm text-slate-600 mb-3">
-                        {proposal.customer} • {proposal.agency}
-                      </p>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 mb-3">
+                        <span className="flex items-center gap-1.5">
+                          🏢 <strong className="font-medium text-slate-700">{proposal.customer}</strong>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          🏛️ <strong className="font-medium text-slate-700">{proposal.agency}</strong>
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <span className={`px-4 py-1.5 rounded-full font-semibold uppercase tracking-wide text-xs ${
                           proposal.status === 'active' 
-                            ? 'bg-green-100 text-green-700' 
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
                             : proposal.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-slate-100 text-slate-600'
+                            ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                           {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                         </span>
-                        <span className="text-xs text-slate-500">
-                          Due: {new Date(proposal.dueDate).toLocaleDateString()}
+                        <span className="flex items-center gap-1.5 text-slate-600">
+                          📅 Due: <strong className="font-medium text-slate-700">{new Date(proposal.dueDate).toLocaleDateString()}</strong>
                         </span>
-                        <span className="text-xs font-semibold text-blue-600">
-                          ${proposal.value.toLocaleString()}
+                        <span className="flex items-center gap-1.5 font-semibold text-blue-600">
+                          💰 ${proposal.value.toLocaleString()}
                         </span>
                       </div>
                     </div>
-                    <button className="ml-4 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                      View Details →
+                    
+                    <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -134,11 +142,13 @@ export const CustomerDashboard: React.FC = () => {
         </div>
 
         {/* API Connection Status */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-green-600 flex items-center justify-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Connected to FreDeSa API
-          </p>
+        <div className="mt-8 flex items-center justify-center">
+          <div className="bg-white border border-emerald-200 rounded-full px-4 py-2 shadow-sm">
+            <p className="text-sm text-emerald-700 font-medium flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              Connected to FreDeSa API
+            </p>
+          </div>
         </div>
       </div>
     </div>
