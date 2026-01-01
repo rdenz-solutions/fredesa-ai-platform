@@ -20,18 +20,18 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ children, requiredRole }) 
     // -------------------------------------------------------------------------
     // 🔐 ENTERPRISE ROLE CHECK
     // -------------------------------------------------------------------------
-    // In a real scenario, we extract the role from the ID Token Claims.
-    // For this prototype, we will simulate it or allow all authenticated users.
-    
     const accounts = instance.getAllAccounts();
     const activeAccount = accounts[0];
     
-    // Mock logic: In production, this comes from activeAccount.idTokenClaims.roles
-    // const userRoles = (activeAccount?.idTokenClaims as any)?.roles || [];
+    // Extract roles from Azure AD ID Token claims
+    const userRoles = (activeAccount?.idTokenClaims as any)?.roles || [];
     
-    // if (requiredRole && !userRoles.includes(requiredRole)) {
-    //    return <Navigate to="/unauthorized" />;
-    // }
+    // Check if user has required role
+    if (requiredRole && !userRoles.includes(requiredRole)) {
+        console.warn(`Access denied: User lacks required role '${requiredRole}'`);
+        console.log('User roles:', userRoles);
+        return <Navigate to="/dashboard" replace />;  // Redirect to customer dashboard
+    }
 
     return <>{children}</>;
 };

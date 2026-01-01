@@ -2,6 +2,7 @@ import React from 'react';
 import { useMsal, useIsAuthenticated } from "@azure/msal-react";
 import { Link, Outlet, useNavigate, Navigate } from 'react-router-dom';
 import { LogOut, User } from 'lucide-react';
+import { UserRoleBadge } from '../components/UserRoleBadge';
 
 export const MainLayout: React.FC = () => {
   const { instance, accounts } = useMsal();
@@ -63,6 +64,7 @@ export const MainLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1">
+        <UserRoleBadge />
         <Outlet />
       </main>
     </div>
