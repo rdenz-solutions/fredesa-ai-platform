@@ -8,14 +8,12 @@ export const UserRoleBadge: React.FC = () => {
   if (isLoading) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50">
-      <div className={`px-4 py-2 rounded-full text-sm font-semibold shadow-lg ${
-        isSuperAdmin 
-          ? 'bg-purple-600 text-white' 
-          : 'bg-blue-600 text-white'
-      }`}>
-        {isSuperAdmin ? '🛡️ SuperAdmin' : '👤 Customer User'}
-      </div>
-    </div>
+    <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+      isSuperAdmin 
+        ? 'bg-purple-100 text-purple-700 border-purple-200' 
+        : 'bg-blue-100 text-blue-700 border-blue-200'
+    }`}>
+      {isSuperAdmin ? '🛡️ SuperAdmin' : '👤 Customer User'}
+    </span>
   );
 };

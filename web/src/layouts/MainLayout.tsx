@@ -39,6 +39,9 @@ export const MainLayout: React.FC = () => {
                     {import.meta.env.VITE_ENV_NAME || 'Development'} Environment
                 </span>
             )}
+            
+            {/* Role Badge */}
+            <UserRoleBadge />
         </div>
 
         <div className="flex items-center gap-4">
@@ -64,7 +67,6 @@ export const MainLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1">
-        <UserRoleBadge />
         <Outlet />
       </main>
     </div>
