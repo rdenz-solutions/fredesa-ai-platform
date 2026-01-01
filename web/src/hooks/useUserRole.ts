@@ -10,7 +10,7 @@ export const useUserRole = () => {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['userProfile'],
-    queryFn: () => getUserProfile(instance),
+    queryFn: () => getUserProfile(instance as any),
   });
 
   const role = profile?.role;
