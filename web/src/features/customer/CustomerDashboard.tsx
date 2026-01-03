@@ -16,12 +16,19 @@ export const CustomerDashboard: React.FC = () => {
   });
 
   // Fetch proposals
-  const { data: proposalsData, isLoading: proposalsLoading, error } = useQuery({
+  const { data: proposalsData, isLoading: proposalsLoading, error, isError } = useQuery({
     queryKey: ['proposals'],
     queryFn: () => getProposals(instance as any),
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const isLoading = profileLoading || proposalsLoading;
+
+  // Log errors to console for debugging
+  if (error) {
+    console.error('[CustomerDashboard] Error loading proposals:', error);
+  }
 
   if (isLoading) {
     return (
@@ -34,12 +41,24 @@ export const CustomerDashboard: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (isError || error) {
     return (
       <div className="p-8 bg-white min-h-screen flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl">
           <h3 className="text-red-800 font-semibold mb-2">⚠️ Connection Error</h3>
-          <p className="text-red-600 text-sm">Unable to load data from API. Please check your connection.</p>
+          <p className="text-red-600 text-sm mb-4">Unable to load data from API. Please check your connection.</p>
+          <details className="text-sm">
+            <summary className="cursor-pointer text-red-700 font-medium mb-2">Technical Details</summary>
+            <pre className="bg-red-100 p-3 rounded text-xs overflow-auto">
+              {error instanceof Error ? error.message : JSON.stringify(error, null, 2)}
+            </pre>
+          </details>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+          >
+            Reload Page
+          </button>
         </div>
       </div>
     );

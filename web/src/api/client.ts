@@ -7,6 +7,11 @@ import { PublicClientApplication } from "@azure/msal-browser";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
+// Debug logging for environment variables
+console.log('[API Client] Environment:', import.meta.env.MODE);
+console.log('[API Client] API_BASE_URL:', API_BASE_URL);
+console.log('[API Client] All env vars:', import.meta.env);
+
 /**
  * Get access token for API calls
  */

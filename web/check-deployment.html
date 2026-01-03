@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug Check</title></head>
+<body>
+<script>
+// Test if the deployed app has any console errors
+fetch('https://fredesa-ai-platform.vercel.app/dashboard')
+  .then(r => r.text())
+  .then(html => {
+    console.log('Page loaded, checking for JS bundle...');
+    const jsMatch = html.match(/src="([^"]*index-[^"]*\.js)"/);
+    if (jsMatch) {
+      console.log('JS Bundle:', jsMatch[1]);
+    }
+  });
+</script>
+</body>
+</html>
