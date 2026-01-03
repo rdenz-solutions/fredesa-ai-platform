@@ -63,9 +63,7 @@ const App: React.FC<AppProps> = ({ pca }) => {
 
                 {/* Customer Routes */}
                 <Route path="/dashboard" element={
-                    <RoleGuard requiredRole="Customer_User">
-                        <CustomerDashboard />
-                    </RoleGuard>
+                    <CustomerDashboard />
                 } />
             </Route>
           </Routes>

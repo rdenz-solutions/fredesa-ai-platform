@@ -285,6 +285,125 @@ async def get_analytics(user_claims: Dict = Depends(verify_token)):
         "win_rate": 68,
     }
 
+# ============================================================================
+# KNOWLEDGE REGISTRY ENDPOINTS
+# ============================================================================
+
+@app.get("/api/knowledge/stats")
+async def get_knowledge_stats(user_claims: Dict = Depends(verify_token)):
+    """
+    Get statistics about the knowledge registry
+    """
+    # Mock data - replace with actual database queries
+    return {
+        "total_sources": 1043,
+        "by_authority": {
+            "official_government": 180,  # Authority 90
+            "expert_documentation": 592,  # Authority 70
+            "community_resources": 271    # Authority 50
+        },
+        "by_dimension": {
+            "theory": 287,
+            "practice": 456,
+            "history": 189,
+            "current": 523,
+            "future": 95
+        },
+        "by_category": {
+            "Federal_Contracting": 245,
+            "AI_ML": 198,
+            "Cybersecurity": 167,
+            "Intelligence": 143,
+            "Cloud_Infrastructure": 134,
+            "Other": 156
+        },
+        "top_sources": [
+            {"name": "Federal Acquisition Regulation (FAR)", "authority": 90, "category": "Federal_Contracting"},
+            {"name": "Defense Federal Acquisition Regulation (DFARS)", "authority": 90, "category": "Federal_Contracting"},
+            {"name": "NIST AI Framework", "authority": 90, "category": "AI_ML"},
+            {"name": "CMMC 2.0 Model", "authority": 90, "category": "Cybersecurity"},
+            {"name": "AWS Well-Architected Framework", "authority": 70, "category": "Cloud_Infrastructure"}
+        ]
+    }
+
+@app.get("/api/knowledge/search")
+async def search_knowledge(
+    query: str,
+    dimension: str = None,
+    category: str = None,
+    min_authority: int = 70,
+    limit: int = 10,
+    user_claims: Dict = Depends(verify_token)
+):
+    """
+    Search the knowledge registry
+    """
+    # Mock data - replace with actual query_knowledge_base call
+    mock_sources = [
+        {
+            "name": "Federal Acquisition Regulation Part 19: Small Business Programs",
+            "url": "https://www.acquisition.gov/far/part-19",
+            "description": "Comprehensive guidance on small business subcontracting requirements and compliance",
+            "dimension": "practice",
+            "difficulty": "intermediate",
+            "source_type": "government",
+            "authority_score": 90,
+            "quality_score": 95.0,
+            "category": "Federal_Contracting"
+        },
+        {
+            "name": "NIST Cybersecurity Framework 2.0",
+            "url": "https://www.nist.gov/cyberframework",
+            "description": "Industry standard for managing cybersecurity risks",
+            "dimension": "practice",
+            "difficulty": "intermediate",
+            "source_type": "government",
+            "authority_score": 90,
+            "quality_score": 94.0,
+            "category": "Cybersecurity"
+        },
+        {
+            "name": "DoD Cloud Computing Security Requirements Guide",
+            "url": "https://public.cyber.mil/dccs/",
+            "description": "Security requirements for cloud service providers working with DoD",
+            "dimension": "practice",
+            "difficulty": "advanced",
+            "source_type": "government",
+            "authority_score": 90,
+            "quality_score": 92.0,
+            "category": "Cloud_Infrastructure"
+        }
+    ]
+    
+    return {
+        "sources": mock_sources[:limit],
+        "query_info": {
+            "original_query": query,
+            "dimension_filter": dimension,
+            "category_filter": category,
+            "min_authority": min_authority,
+            "results_count": len(mock_sources[:limit])
+        },
+        "total_count": len(mock_sources)
+    }
+
+@app.get("/api/knowledge/categories")
+async def get_categories(user_claims: Dict = Depends(verify_token)):
+    """
+    Get all knowledge categories
+    """
+    return {
+        "categories": [
+            {"id": "Federal_Contracting", "name": "Federal Contracting", "count": 245},
+            {"id": "AI_ML", "name": "AI & Machine Learning", "count": 198},
+            {"id": "Cybersecurity", "name": "Cybersecurity", "count": 167},
+            {"id": "Intelligence", "name": "Intelligence Community", "count": 143},
+            {"id": "Cloud_Infrastructure", "name": "Cloud Infrastructure", "count": 134},
+            {"id": "DevOps", "name": "DevOps & CI/CD", "count": 89},
+            {"id": "Data_Science", "name": "Data Science", "count": 67}
+        ]
+    }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
