@@ -1,0 +1,94 @@
+# FreDeSa AI Platform - Local Development Environment
+# docker-compose up -d
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # PostgreSQL 15 with pgvector extension
+  # ============================================================================
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: fredesa-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fredesa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password_changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-fredesa_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fredesa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fredesa-network
+
+  # ============================================================================
+  # Redis (for caching and sessions)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: fredesa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fredesa-network
+
+  # ============================================================================
+  # pgAdmin (Optional - Database Management UI)
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fredesa-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@fredesa.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - fredesa-network
+    profiles:
+      - tools
+
+  # ============================================================================
+  # Mailhog (Optional - Email Testing)
+  # ============================================================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: fredesa-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - fredesa-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  fredesa-network:
+    driver: bridge

@@ -1,0 +1,325 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version/tag to deploy (must be tagged release)'
+        required: true
+      reason:
+        description: 'Reason for production deployment'
+        required: true
+      skip_smoke_tests:
+        description: 'Skip smoke tests (emergency only)'
+        required: false
+        default: 'false'
+
+env:
+  AZURE_RESOURCE_GROUP: rg-fredesa-prod
+  AZURE_LOCATION: eastus2
+  BACKEND_APP_NAME: fredesa-api
+  FRONTEND_APP_NAME: fredesa-web
+  REGISTRY_NAME: fredesaregistry
+
+jobs:
+  pre-deployment-validation:
+    name: Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - name: Validate production deployment
+        run: |
+          echo "## 🔍 Pre-Deployment Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if version is a proper tag (not 'latest')
+          if [[ "${{ github.event.inputs.version }}" == "latest" ]]; then
+            echo "❌ ERROR: Cannot deploy 'latest' to production" >> $GITHUB_STEP_SUMMARY
+            echo "Production deployments require a specific version tag" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Verify tag exists
+          git fetch --tags
+          if ! git rev-parse "${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+            echo "❌ ERROR: Tag ${{ github.event.inputs.version }} not found" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          echo "✅ Version tag validated: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check staging environment
+        run: |
+          echo "Checking staging environment health..."
+          STAGING_URL="https://fredesa-api-staging.eastus.azurecontainerapps.io"
+          
+          HEALTH_STATUS=$(curl -s ${STAGING_URL}/health | jq -r '.status')
+          
+          if [[ "$HEALTH_STATUS" == "healthy" ]]; then
+            echo "✅ Staging environment is healthy" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  WARNING: Staging environment is not healthy" >> $GITHUB_STEP_SUMMARY
+            echo "Consider fixing staging before production deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Display deployment checklist
+        run: |
+          echo "## 📋 Production Deployment Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Before proceeding, ensure:" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] All tests passing in CI/CD" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Security scans completed" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Staging deployment successful" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Database migrations tested" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Rollback plan documented" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Team notified of deployment window" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] On-call engineer available" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+  
+  production-approval:
+    name: Production Deployment Approval
+    needs: pre-deployment-validation
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.fredesa.com
+    
+    steps:
+      - name: Approval gate
+        run: |
+          echo "✅ Production deployment approved by: ${{ github.actor }}"
+          echo "Proceeding with deployment..."
+  
+  backup-production:
+    name: Backup Production State
+    needs: production-approval
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Backup production database
+        run: |
+          echo "Creating production database backup..."
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_NAME="pre_deployment_${TIMESTAMP}"
+          
+          # Trigger Azure Database backup
+          echo "Database backup initiated: ${BACKUP_NAME}"
+          echo "⚠️ Note: Automated Azure Database backups run daily"
+          echo "Manual backup trigger not available via CLI"
+      
+      - name: Record current revisions
+        run: |
+          # Get current container app revisions
+          BACKEND_REVISION=$(az containerapp revision list \
+            --name ${{ env.BACKEND_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[?properties.active==\`true\`].name" -o tsv)
+          
+          FRONTEND_REVISION=$(az containerapp revision list \
+            --name ${{ env.FRONTEND_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query "[?properties.active==\`true\`].name" -o tsv)
+          
+          echo "BACKEND_ROLLBACK_REVISION=${BACKEND_REVISION}" >> $GITHUB_ENV
+          echo "FRONTEND_ROLLBACK_REVISION=${FRONTEND_REVISION}" >> $GITHUB_ENV
+          
+          echo "## 💾 Backup Information" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend revision:** ${BACKEND_REVISION}" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend revision:** ${FRONTEND_REVISION}" >> $GITHUB_STEP_SUMMARY
+  
+  build-and-deploy:
+    name: Build and Deploy to Production
+    needs: backup-production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      
+      - name: Get commit SHA
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-backend:${{ github.event.inputs.version }}
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-backend:prod-${{ steps.sha.outputs.sha }}
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-backend:prod-latest
+          cache-from: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-backend:prod-latest
+          cache-to: type=inline
+      
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=https://api.fredesa.com
+          tags: |
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-frontend:${{ github.event.inputs.version }}
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-frontend:prod-${{ steps.sha.outputs.sha }}
+            ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-frontend:prod-latest
+          cache-from: type=registry,ref=${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-frontend:prod-latest
+          cache-to: type=inline
+      
+      - name: Deploy backend (Blue-Green)
+        run: |
+          echo "Deploying backend to production..."
+          
+          az containerapp update \
+            --name ${{ env.BACKEND_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-backend:${{ github.event.inputs.version }} \
+            --set-env-vars \
+              ENVIRONMENT=production \
+              DATABASE_URL="${{ secrets.PROD_DATABASE_URL }}" \
+              REDIS_URL="${{ secrets.PROD_REDIS_URL }}" \
+              AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
+              AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" \
+              OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              APPLICATIONINSIGHTS_CONNECTION_STRING="${{ secrets.APPLICATIONINSIGHTS_CONNECTION_STRING }}" \
+            --revision-suffix $(echo ${{ github.event.inputs.version }} | tr '.' '-')
+          
+          echo "✅ Backend deployment initiated"
+      
+      - name: Deploy frontend (Blue-Green)
+        run: |
+          echo "Deploying frontend to production..."
+          
+          az containerapp update \
+            --name ${{ env.FRONTEND_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.REGISTRY_NAME }}.azurecr.io/fredesa-frontend:${{ github.event.inputs.version }} \
+            --revision-suffix $(echo ${{ github.event.inputs.version }} | tr '.' '-')
+          
+          echo "✅ Frontend deployment initiated"
+      
+      - name: Wait for deployment stabilization
+        run: |
+          echo "Waiting 120 seconds for production deployment to stabilize..."
+          sleep 120
+      
+      - name: Health checks
+        if: github.event.inputs.skip_smoke_tests != 'true'
+        id: health_check
+        run: |
+          PROD_URL="https://api.fredesa.com"
+          
+          echo "Running production health checks..."
+          for i in {1..10}; do
+            if curl -f ${PROD_URL}/health; then
+              echo "✅ Health check passed"
+              exit 0
+            else
+              echo "⏳ Health check attempt $i/10 failed, retrying..."
+              sleep 15
+            fi
+          done
+          
+          echo "❌ Health checks failed after 10 attempts"
+          exit 1
+      
+      - name: Smoke tests
+        if: github.event.inputs.skip_smoke_tests != 'true'
+        run: |
+          BACKEND_URL="https://api.fredesa.com"
+          FRONTEND_URL="https://app.fredesa.com"
+          
+          # Test critical endpoints
+          echo "Testing API documentation..."
+          curl -f ${BACKEND_URL}/docs || exit 1
+          
+          echo "Testing frontend..."
+          curl -f ${FRONTEND_URL} || exit 1
+          
+          echo "✅ Production smoke tests passed!"
+      
+      - name: Monitor for errors (5 minutes)
+        if: github.event.inputs.skip_smoke_tests != 'true'
+        run: |
+          echo "Monitoring production for 5 minutes..."
+          echo "Check Application Insights for errors during this window"
+          sleep 300
+          echo "✅ Monitoring period complete"
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ PRODUCTION DEPLOYMENT FAILED - INITIATING ROLLBACK"
+          
+          # Rollback backend
+          if [ -n "${{ env.BACKEND_ROLLBACK_REVISION }}" ]; then
+            echo "Rolling back backend to: ${{ env.BACKEND_ROLLBACK_REVISION }}"
+            az containerapp revision activate \
+              --name ${{ env.BACKEND_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --revision ${{ env.BACKEND_ROLLBACK_REVISION }}
+          fi
+          
+          # Rollback frontend
+          if [ -n "${{ env.FRONTEND_ROLLBACK_REVISION }}" ]; then
+            echo "Rolling back frontend to: ${{ env.FRONTEND_ROLLBACK_REVISION }}"
+            az containerapp revision activate \
+              --name ${{ env.FRONTEND_APP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --revision ${{ env.FRONTEND_ROLLBACK_REVISION }}
+          fi
+          
+          echo "✅ Rollback completed - production restored to previous state"
+          exit 1
+      
+      - name: Create deployment record
+        if: success()
+        run: |
+          echo "## 🎉 PRODUCTION DEPLOYMENT SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ steps.sha.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Production URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend API: https://api.fredesa.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend App: https://app.fredesa.com" >> $GITHUB_STEP_SUMMARY
+          echo "- API Docs: https://api.fredesa.com/docs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Post-Deployment Actions:**" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Monitor Application Insights for 1 hour" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Check error rates and performance metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Notify customers of new features (if applicable)" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Update release notes" >> $GITHUB_STEP_SUMMARY

@@ -104,6 +104,82 @@ cat ../rdenz-knowledge-registry/FREDESA_DATABASE_INTEGRATION_GUIDE.md
 
 ---
 
+## 🔐 Environment Variables & Secrets
+
+### **Backend API Secrets**
+**Location:** `/Users/delchaplin/Project Files/fredesa-ai-platform/api/.env`
+
+```bash
+# Azure AD Configuration
+AZURE_TENANT_ID=19815b28-437b-405b-ade0-daea9943eb8b
+AZURE_CLIENT_ID=257a158a-c6d6-4595-8dc3-df07e83504ac
+
+# Database (when configured)
+# DATABASE_URL=postgresql://user:password@localhost/fredesa
+
+# Environment
+ENVIRONMENT=development
+```
+
+**How to load in Python:**
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Loads from /api/.env
+
+tenant_id = os.getenv("AZURE_TENANT_ID")
+client_id = os.getenv("AZURE_CLIENT_ID")
+db_url = os.getenv("DATABASE_URL")
+```
+
+---
+
+### **Frontend Secrets**
+**Location:** `/Users/delchaplin/Project Files/fredesa-ai-platform/web/.env`
+
+```bash
+# Environment Variables
+VITE_API_URL=http://localhost:8000
+```
+
+**Location:** `/Users/delchaplin/Project Files/fredesa-ai-platform/web/.env.azure`
+
+```bash
+# Azure AD Configuration (Frontend)
+VITE_AZURE_TENANT_ID=19815b28-437b-405b-ade0-daea9943eb8b
+VITE_AZURE_CLIENT_ID=257a158a-c6d6-4595-8dc3-df07e83504ac
+VITE_AZURE_REDIRECT_URI=http://localhost:3000
+```
+
+**How to access in Vite/React:**
+```typescript
+// All Vite env vars are prefixed with VITE_
+const apiUrl = import.meta.env.VITE_API_URL;
+const tenantId = import.meta.env.VITE_AZURE_TENANT_ID;
+const clientId = import.meta.env.VITE_AZURE_CLIENT_ID;
+```
+
+---
+
+### **Knowledge Registry Secrets (for reference)**
+**Location:** `/Users/delchaplin/Project Files/rdenz-knowledge-registry/.env`
+
+```bash
+# Pinecone Vector Database
+PINECONE_API_KEY=[Get from ../rdenz-knowledge-registry/.env]
+
+# OpenAI API (for embeddings)
+OPENAI_API_KEY=[Get from ../rdenz-knowledge-registry/.env]
+
+# Firecrawl API (for content ingestion)
+FIRECRAWL_API_KEY=[Get from ../rdenz-knowledge-registry/.env]
+```
+
+**When to use:** If FreDeSa needs to call Knowledge Registry APIs or MCP servers.
+
+---
+
 ## ✅ DO
 
 1. Reference `FREDESA_DATABASE_INTEGRATION_GUIDE.md` for DB work

@@ -1,0 +1,207 @@
+name: Test Suite
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: fredesa
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: fredesa_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd api
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
+      
+      - name: Set up test database
+        env:
+          DATABASE_URL: postgresql://fredesa:test_password@localhost:5432/fredesa_test
+        run: |
+          cd api
+          python -m pytest --version
+      
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgresql://fredesa:test_password@localhost:5432/fredesa_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+          DEBUG_MODE: false
+        run: |
+          cd api
+          python -m pytest tests/unit/ -v --cov=app --cov-report=xml --cov-report=term
+      
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://fredesa:test_password@localhost:5432/fredesa_test
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+          DEBUG_MODE: false
+        run: |
+          cd api
+          python -m pytest tests/integration/ -v --cov=app --cov-report=xml --cov-report=term --cov-append
+      
+      - name: Check code coverage
+        run: |
+          cd api
+          python -m pytest --cov=app --cov-report=term --cov-fail-under=80
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./api/coverage.xml
+          flags: backend
+          name: backend-coverage
+  
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd web
+          npm ci
+      
+      - name: Run linter
+        run: |
+          cd web
+          npm run lint
+      
+      - name: Run type check
+        run: |
+          cd web
+          npm run type-check
+      
+      - name: Run unit tests
+        run: |
+          cd web
+          npm run test:coverage
+      
+      - name: Check code coverage
+        run: |
+          cd web
+          npm run test:coverage -- --reporter=json --reporter=text
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./web/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+  
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Python linting tools
+        run: |
+          pip install black flake8 isort mypy
+      
+      - name: Run Black (formatter check)
+        run: |
+          cd api
+          black --check .
+      
+      - name: Run flake8 (linter)
+        run: |
+          cd api
+          flake8 app/ --max-line-length=100 --extend-ignore=E203,W503
+      
+      - name: Run isort (import order check)
+        run: |
+          cd api
+          isort --check-only .
+      
+      - name: Run mypy (type check)
+        run: |
+          cd api
+          mypy app/ --ignore-missing-imports
+  
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api
+          file: ./api/Dockerfile
+          push: false
+          tags: fredesa-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web
+          file: ./web/Dockerfile
+          push: false
+          tags: fredesa-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

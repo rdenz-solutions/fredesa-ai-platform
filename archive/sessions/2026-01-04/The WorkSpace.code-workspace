@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"path": "../../../../rdenz-knowledge-registry"
+		},
+		{
+			"path": "../../.."
+		}
+	],
+	"settings": {
+		"github.copilot.chat.codeGeneration.useInstructionFiles": true,
+		"github.copilot.chat.localeOverride": "en",
+		"files.associations": {
+			"*.yaml": "yaml",
+			"sources.yaml": "yaml",
+			".copilot-instructions.md": "markdown",
+			"*.http": "http"
+		},
+		"yaml.schemas": {
+			"${workspaceFolder}/config/sources.schema.json": "config/sources.yaml"
+		},
+		"errorLens.enabledDiagnosticLevels": [
+			"error",
+			"warning"
+		],
+		"errorLens.excludeBySource": [
+			"cSpell"
+		],
+		"chat.agent.maxRequests": 50
+	}
+}
